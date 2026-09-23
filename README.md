@@ -2,7 +2,6 @@
 
 Implementación del **Repositorio 1: Workshop implementation** descrito en [Instrucciones.txt](Instrucciones.txt). Este proyecto construye una API REST mínima con Spring Boot, la ejecuta en Docker y define un entorno de varios contenedores con Docker Compose.
 
-> El alcance de este repositorio es la implementación del taller con Spring Boot. La extensión del framework propio corresponde al Repositorio 2 y no forma parte de este proyecto.
 
 ## Contenido
 
@@ -63,8 +62,10 @@ El `dockerfile` de la raíz usa Amazon Corretto 21 y espera que el JAR ya esté 
 
 ```bash
 mvn clean package
-docker build -t <usuario-dockerhub>/virtualization-lab:1.0 -f dockerfile .
+docker build -t <usuario-dockerhub>/virtualization-lab:1.0 -f dockerfile --load .
 ```
+
+> En builds recientes de Docker Desktop, el driver `docker-container` no carga la imagen al motor local automáticamente; usa `--load` para poder correrla con `docker run`.
 
 Ejecuta un contenedor con el puerto local `34000`:
 
@@ -124,7 +125,7 @@ docker push <usuario-dockerhub>/virtualization-lab:1.0
 docker push <usuario-dockerhub>/virtualization-lab:latest
 ```
 
-**Repositorio de Docker Hub:** pendiente de agregar la URL pública.
+**Repositorio de Docker Hub:** [hub.docker.com/r/carlosavellaneda1/virtualization-lab](https://hub.docker.com/r/carlosavellaneda1/virtualization-lab)
 
 ## Despliegue en AWS EC2
 
@@ -148,7 +149,9 @@ docker ps
 docker logs virtualization-lab
 ```
 
-Comprueba `http://<dns-publico-ec2>:8080/greeting?name=AWS`. **URL pública del despliegue:** pendiente de agregar. Detén o termina la instancia cuando ya no la necesites para evitar cargos.
+Comprueba `http://<ip-publica-ec2>:8080/greeting?name=AWS`. **URL pública del despliegue:** [http://13.222.159.181:8080/greeting](http://13.222.159.181:8080/greeting) *(activa mientras la instancia EC2 permanezca encendida; el navegador marcará el sitio como "no seguro" porque el tráfico va sin TLS, lo cual es esperado en este taller)*.
+
+Detén o termina la instancia cuando ya no la necesites para evitar cargos.
 
 ## Arquitectura y costos
 
@@ -170,34 +173,29 @@ Una instancia EC2 encendida durante todo el mes genera un costo base aunque reci
 
 ### Estimación mensual
 
-La guía solicita comparar 10.000, 100.000 y 1.000.000 solicitudes al mes. Aún no se ha agregado una exportación de AWS Pricing Calculator ni datos verificados para completar los importes; no se incluyen cifras estimadas como si fueran cotizaciones.
+Se generó una primera estimación en la AWS Pricing Calculator para una sola instancia EC2 encendida de forma continua en **US East (Ohio)**: **3.80 USD/mes** (45.60 USD a 12 meses), únicamente por cómputo EC2. Esta cifra aún no incluye EBS ni transferencia de datos salientes, y todavía debe replicarse ajustando el número de instancias para el escenario de carga grande.
 
 | Escenario | Solicitudes/mes | Región, instancia y horas | Costo mensual | Costo/solicitud | Principales supuestos |
 |---|---:|---|---:|---:|---|
-| Pequeño | 10.000 | Pendiente | Pendiente | Pendiente | EBS, transferencia, tamaño de solicitud/respuesta y disponibilidad por definir |
-| Mediano | 100.000 | Pendiente | Pendiente | Pendiente | EBS, transferencia, tamaño de solicitud/respuesta y disponibilidad por definir |
-| Grande | 1.000.000 | Pendiente | Pendiente | Pendiente | Capacidad, transferencia, escalamiento y alta disponibilidad por definir |
+| Pequeño | 10.000 | US East (Ohio), 1× t3.micro, 730 h/mes | ≈ 3.80 USD (solo EC2; falta sumar EBS y transferencia) | ≈ 0.00038 USD | Tráfico bajo e intermitente; una sola instancia cubre la demanda sin problema |
+| Mediano | 100.000 | US East (Ohio), 1× t3.micro, 730 h/mes | ≈ 3.80 USD (solo EC2; falta sumar EBS y transferencia) | ≈ 0.000038 USD | Misma instancia que el escenario pequeño; el costo fijo se diluye entre más solicitudes |
+| Grande | 1.000.000 | Pendiente (probablemente 2× instancias por capacidad/disponibilidad) | Pendiente | Pendiente | Requiere reestimar con más de una instancia, EBS ampliado y transferencia de salida real |
 
-Calcula cada valor como `costo mensual de infraestructura / solicitudes mensuales`. La estimación final debe incluir EC2, EBS y transferencia de salida, junto con región, tipo y número de instancias, horas mensuales, almacenamiento, transferencia esperada y tamaños promedio de solicitud/respuesta. Adjunta la captura o exportación de Pricing Calculator cuando esté disponible.
+Calcula cada valor como `costo mensual de infraestructura / solicitudes mensuales`. **Pendiente antes de la entrega final:** agregar EBS (tamaño de disco) y transferencia de datos como líneas separadas en la calculadora, generar una estimación específica para el escenario grande con más de una instancia, y adjuntar la exportación (captura o PDF/CSV) de cada una.
 
-Un solo EC2 tiene costos fijos incluso con poco tráfico. Varias instancias podrían ser necesarias si una instancia ya no satisface la capacidad, disponibilidad o tolerancia a fallos requeridas; un despliegue de producción también puede necesitar balanceador, base de datos administrada, monitoreo, respaldos y registro de imágenes. Para tráfico pequeño e intermitente, una opción serverless podría reducir el costo de cómputo ocioso; la comparación depende de la duración y frecuencia de las solicitudes, además de los servicios auxiliares. La elección requiere los supuestos y precios concretos de la región.
+Un solo EC2 tiene costos fijos incluso con poco tráfico. Varias instancias podrían ser necesarias si una instancia ya no satisface la capacidad, disponibilidad o tolerancia a fallos requeridas; un despliegue de producción también puede necesitar balanceador, base de datos administrada, monitoreo, respaldos y registro de imágenes. Para tráfico pequeño e intermitente, una opción serverless podría reducir el costo de cómputo ocioso; la comparación depende de la duración y frecuencia de las solicitudes, además de los servicios auxiliares.
 
-**Conclusión de costos:** pendiente hasta definir supuestos de carga y región, y adjuntar el cálculo verificable.
+**Conclusión de costos:** con base en la estimación parcial actual (solo cómputo EC2), el costo por solicitud cae de forma notable entre el escenario pequeño y el mediano al mantener la misma instancia, lo que confirma que el costo fijo de EC2 se diluye con más tráfico. La conclusión final —incluyendo si EC2 sigue siendo apropiado para el escenario grande frente a alternativas serverless— queda pendiente hasta completar EBS, transferencia y el escalamiento a más instancias.
 
 ## Evidencias
 
-Las imágenes siguientes se conservan en el repositorio como evidencias visuales del desarrollo del taller. Añade pies de foto precisos y confirma qué demuestra cada captura antes de la entrega final.
-
-| Captura | Archivo |
-|---|---|
-| 1 | ![Evidencia 1](image.png) |
-| 2 | ![Evidencia 2](image-1.png) |
-| 3 | ![Evidencia 3](image-2.png) |
-| 4 | ![Evidencia 4](image-3.png) |
-| 5 | ![Evidencia 5](image-4.png) |
-| 6 | ![Evidencia 6](image-5.png) |
-| 7 | ![Evidencia 7](image-6.png) |
-| 8 | ![Evidencia 8](image-7.png) |
-
-Para completar los entregables del Repositorio 1, agrega la URL del repositorio de Docker Hub, la URL pública de EC2 (si la instancia sigue activa), una descripción verificable por captura, y el cálculo de costos junto con sus supuestos. El video de demostración local y en EC2 también se entrega según las instrucciones del taller.
-
+| # | Descripción | Archivo |
+|---|---|---|
+| 1 | Contenedor local `virtualization-lab-1` respondiendo en el puerto 34000 (`/greeting?name=Carlos`) | ![Evidencia 1](image.png) |
+| 2 | Aislamiento entre contenedores: `virtualization-lab-2` respondiendo de forma independiente en el puerto 34001 (`/greeting?name=Andres`) | ![Evidencia 2](image-1.png) |
+| 3 | Aislamiento entre contenedores: `virtualization-lab-3` respondiendo de forma independiente en el puerto 34002 (`/greeting?name=Avellaneda`) | ![Evidencia 3](image-2.png) |
+| 4 | Docker Desktop mostrando los tres contenedores (`virtualization-lab-1`, `-2`, `-3`) corriendo simultáneamente desde la misma imagen | ![Evidencia 4](image-3.png) |
+| 5 | Entorno multi-contenedor levantado con Docker Compose, respondiendo en el puerto 8087 (`/greeting?name=Compose`) | ![Evidencia 5](image-4.png) |
+| 6 | Repositorio `carlosavellaneda1/virtualization-lab` publicado y visible en Docker Hub | ![Evidencia 6](image-5.png) |
+| 7 | Aplicación desplegada y respondiendo desde la instancia EC2 en `13.222.159.181:8080` (`/greeting?name=AWS`) | ![Evidencia 7](image-6.png) |
+| 8 | Estimación de la AWS Pricing Calculator: instancia EC2 en US East (Ohio), 3.80 USD/mes | ![Evidencia 8](image-7.png) |
