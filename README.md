@@ -198,4 +198,4 @@ Un solo EC2 tiene costos fijos incluso con poco tráfico. Varias instancias podr
 | 5 | Entorno multi-contenedor levantado con Docker Compose, respondiendo en el puerto 8087 (`/greeting?name=Compose`) | ![Evidencia 5](image-4.png) |
 | 6 | Repositorio `carlosavellaneda1/virtualization-lab` publicado y visible en Docker Hub | ![Evidencia 6](image-5.png) |
 | 7 | Aplicación desplegada y respondiendo desde la instancia EC2 en `13.222.159.181:8080` (`/greeting?name=AWS`) | ![Evidencia 7](image-6.png) |
-| 8 | Estimación de la AWS Pricing Calculator: instancia EC2 en US East (Ohio), 3.80 USD/mes | ![Evidencia 8](image-7.png) |
+| 8 | Estimación de la AWS Pricing Calculator: instancia EC2 en US East (Ohio) | ![Evidencia 8](![Evidencia 8](image-7.png)) ![Evidencia 9](image-8.png) |
