@@ -241,7 +241,7 @@ En local, Docker Compose añade un segundo contenedor (MongoDB 8) en la misma re
 | Horas de ejecución/mes | 730 (24/7) | 730 (24/7) | 730 por instancia (24/7) |
 | Almacenamiento EBS | 8 GiB gp3 | 8 GiB gp3 | 8 GiB gp3 por instancia |
 | Tamaño medio solicitud + respuesta | ≈ 1 KB (≈ 0,5 KB + 0,5 KB con cabeceras HTTP) | ≈ 1 KB | ≈ 1 KB |
-| Transferencia de salida estimada | ≈ 0,01 GB | ≈ 0,1 GB | ≈ 1 GB |
+| Transferencia de salida estimada | ≈ 0,01 GB (se ingresa 1 GB) | ≈ 0,1 GB (se ingresa 1 GB) | ≈ 1 GB |
 | Ejecución | Continua | Continua | Continua |
 | Alta disponibilidad | No | No | Sí: 2 instancias + Application Load Balancer |
 
@@ -249,27 +249,33 @@ La aplicación es muy ligera (una respuesta de texto de pocos bytes, sin base de
 
 ### Estimación de costos
 
-Precios on-demand de Linux en us-east-1 usados en la estimación (AWS Pricing Calculator):
+La estimación se hizo en la **AWS Pricing Calculator**, región US East (N. Virginia), con un servicio por escenario (EC2 On-Demand al 100 % de uso, EBS gp3 de 8 GB por instancia y transferencia de salida a Internet) y un Application Load Balancer para el escenario grande.
+
+**Estimación pública:** [calculator.aws/#/estimate?id=600e861b917887c386e1d93a8d1eabebfe9e6137](https://calculator.aws/#/estimate?id=600e861b917887c386e1d93a8d1eabebfe9e6137) (el enlace caduca a un año de su creación).
+
+![Estimación en la AWS Pricing Calculator](docs/evidence/aws-pricing-calculator.png)
+
+> El total de 64,90 USD/mes que muestra la calculadora es la suma de las cuatro filas; cada escenario debe leerse por separado: pequeño = fila 1, mediano = fila 2, grande = filas 3 + 4.
+
+Desglose de precios on-demand en us-east-1:
 
 | Concepto | Precio |
 |---|---|
 | EC2 t3.micro | 0,0104 USD/h → 7,59 USD/mes (730 h) |
 | EC2 t3.small | 0,0208 USD/h → 15,18 USD/mes (730 h) |
-| EBS gp3 | 0,08 USD por GB-mes → 0,64 USD/mes por 8 GiB |
-| Transferencia de salida a Internet | Primeros 100 GB/mes sin costo; después 0,09 USD/GB |
-| Application Load Balancer | 0,0225 USD/h → 16,43 USD/mes + ≈ 0,008 USD por LCU-hora (≈ 1 USD/mes con esta carga) |
+| EBS gp3 | 0,08 USD por GB-mes → 0,64 USD/mes por 8 GB |
+| Transferencia de salida a Internet | ≈ 0,09 USD/GB. La calculadora solo acepta GB enteros, así que se ingresó 1 GB en cada escenario (sobreestima un poco los escenarios pequeño y mediano) |
+| Application Load Balancer | 0,0225 USD/h → 16,43 USD/mes + LCU (≈ 0,09 USD/mes con 0,4 conexiones nuevas/s, 1 GB/mes procesado) |
 
 | Escenario | Solicitudes/mes | Costo mensual de infraestructura | Costo estimado por solicitud | Principales impulsores de costo |
 |---|---:|---:|---:|---|
-| Pequeño | 10.000 | **8,23 USD** (7,59 EC2 + 0,64 EBS + 0,00 transferencia) | 8,23 / 10.000 = **0,000823 USD** | Tiempo de ejecución de EC2 y almacenamiento |
-| Mediano | 100.000 | **8,23 USD** (7,59 EC2 + 0,64 EBS + 0,00 transferencia) | 8,23 / 100.000 = **0,0000823 USD** | Tiempo de ejecución de EC2, almacenamiento y transferencia |
-| Grande | 1.000.000 | **≈ 49,08 USD** (30,37 EC2 + 1,28 EBS + ≈ 17,43 ALB + 0,00 transferencia) | 49,08 / 1.000.000 = **0,0000491 USD** | Capacidad de las instancias, balanceador, transferencia y necesidades de escalamiento |
+| Pequeño | 10.000 | **8,32 USD** (7,59 EC2 + 0,64 EBS + 0,09 transferencia) | 8,32 / 10.000 = **0,000832 USD** | Tiempo de ejecución de EC2 y almacenamiento |
+| Mediano | 100.000 | **8,32 USD** (7,59 EC2 + 0,64 EBS + 0,09 transferencia) | 8,32 / 100.000 = **0,0000832 USD** | Tiempo de ejecución de EC2, almacenamiento y transferencia |
+| Grande | 1.000.000 | **48,26 USD** (31,74 EC2 con EBS y transferencia + 16,52 ALB) | 48,26 / 1.000.000 = **0,0000483 USD** | Capacidad de las instancias, balanceador, transferencia y necesidades de escalamiento |
 
 Fórmula: `costo estimado por solicitud = costo mensual de infraestructura / solicitudes mensuales`.
 
-Si no se aplicaran los 100 GB gratuitos de salida, la transferencia costaría ≈ 0,001 USD (pequeño), ≈ 0,009 USD (mediano) y ≈ 0,09 USD (grande) al mes: es despreciable frente al cómputo. No se incluyen impuestos, IPv4 pública (0,005 USD/h si se cobra en la cuenta), ni capa gratuita de EC2.
-
-Las capturas de la AWS Pricing Calculator (evidencias 8 y 9 en la sección [Evidencias](#evidencias)) corresponden a una estimación preliminar en US East (Ohio); la tabla anterior se recalculó para us-east-1, la región donde realmente corre la instancia, sumando EBS, transferencia y el balanceador del escenario grande.
+La transferencia de datos es despreciable frente al cómputo en los tres escenarios (y AWS incluye 100 GB/mes gratuitos de salida por cuenta, que la calculadora no descuenta). No se incluyen impuestos, IPv4 pública (0,005 USD/h si se cobra en la cuenta), ni la capa gratuita de EC2.
 
 ### Discusión de arquitectura
 
@@ -277,7 +283,7 @@ Las capturas de la AWS Pricing Calculator (evidencias 8 y 9 en la sección [Evid
 Porque EC2 se cobra por **tiempo de instancia encendida**, no por solicitud. La VM reserva vCPU, memoria y disco las 730 horas del mes aunque esté casi siempre ociosa; el disco EBS se cobra por GB aprovisionado aunque no se use. En el escenario pequeño la instancia pasa más del 99,9 % del tiempo sin trabajo, pero el costo es el mismo que con 100.000 solicitudes.
 
 **¿En qué nivel de carga el costo fijo pierde peso por solicitud?**
-Ya en el escenario **mediano**: con la misma instancia de 8,23 USD el costo por solicitud baja 10 veces (0,000823 → 0,0000823 USD). Como una t3.micro podría atender varios millones de solicitudes al mes con esta aplicación, el costo fijo sigue diluyéndose mientras no se agregue infraestructura. En el escenario grande el costo total sube (por alta disponibilidad), pero el costo por solicitud sigue bajando (0,0000491 USD).
+Ya en el escenario **mediano**: con la misma instancia de 8,32 USD el costo por solicitud baja 10 veces (0,000832 → 0,0000832 USD). Como una t3.micro podría atender varios millones de solicitudes al mes con esta aplicación, el costo fijo sigue diluyéndose mientras no se agregue infraestructura. En el escenario grande el costo total sube (por alta disponibilidad), pero el costo por solicitud sigue bajando (0,0000483 USD).
 
 **¿Qué obligaría a pasar de una instancia a varias?**
 - Que la CPU o la memoria de una instancia se saturen en los picos (latencia alta, errores 5xx).
@@ -289,11 +295,11 @@ Ya en el escenario **mediano**: con la misma instancia de 8,23 USD el costo por 
 Un **Application Load Balancer** con certificado TLS (ACM) para HTTPS, un **Auto Scaling Group** en varias zonas, una **base de datos administrada** (Amazon DocumentDB o MongoDB Atlas en lugar del MongoDB en contenedor, o RDS), **monitoreo y logs** (CloudWatch métricas, alarmas y logs), **respaldos** (snapshots de EBS / backups de la base de datos), un **registro de contenedores privado** (Amazon ECR), gestión de secretos (Secrets Manager / Parameter Store), DNS (Route 53) y posiblemente WAF.
 
 **¿Sería más económico un despliegue serverless para la carga pequeña?**
-Sí. Con 10.000 solicitudes al mes la carga es **muy baja (≈ 1 solicitud cada 4 minutos) e intermitente**, y cada solicitud dura milisegundos. En serverless (AWS Lambda + API Gateway HTTP API) se paga por solicitud y por tiempo de ejecución: 10.000 invocaciones de ≈ 100 ms con 512 MB suponen ≈ 500 GB-s de cómputo y 10.000 solicitudes de API Gateway (1 USD por millón), es decir **≈ 0,02 USD al mes** (o 0 USD dentro de la capa gratuita), frente a 8,23 USD de la instancia que permanece ociosa casi todo el tiempo. La desventaja es el *cold start* de Java (mitigable con SnapStart) y adaptar la aplicación al modelo de funciones. Con carga alta y sostenida la relación se invierte: un servidor siempre ocupado resulta más barato por solicitud que pagar cada invocación.
+Sí. Con 10.000 solicitudes al mes la carga es **muy baja (≈ 1 solicitud cada 4 minutos) e intermitente**, y cada solicitud dura milisegundos. En serverless (AWS Lambda + API Gateway HTTP API) se paga por solicitud y por tiempo de ejecución: 10.000 invocaciones de ≈ 100 ms con 512 MB suponen ≈ 500 GB-s de cómputo y 10.000 solicitudes de API Gateway (1 USD por millón), es decir **≈ 0,02 USD al mes** (o 0 USD dentro de la capa gratuita), frente a 8,32 USD de la instancia que permanece ociosa casi todo el tiempo. La desventaja es el *cold start* de Java (mitigable con SnapStart) y adaptar la aplicación al modelo de funciones. Con carga alta y sostenida la relación se invierte: un servidor siempre ocupado resulta más barato por solicitud que pagar cada invocación.
 
 ### Conclusión
 
-EC2 **funciona técnicamente** en los tres escenarios, pero su conveniencia económica depende de la carga. Para el escenario **pequeño** EC2 no es la opción más eficiente: se pagan 8,23 USD/mes por una máquina ociosa, cuando serverless costaría centavos. Para el escenario **mediano** EC2 con una sola t3.micro es razonable y simple, porque el costo fijo ya se reparte entre 100.000 solicitudes y la administración es mínima. Para el escenario **grande**, EC2 es apropiado si se añade alta disponibilidad (dos instancias y un balanceador), con un costo por solicitud aún menor (≈ 0,000049 USD). Para este taller, que tiene tráfico bajo, una sola instancia EC2 t3.micro es suficiente y demuestra el modelo VM + contenedor; en producción convendría evaluar serverless o contenedores administrados (ECS Fargate) según el patrón real de tráfico.
+EC2 **funciona técnicamente** en los tres escenarios, pero su conveniencia económica depende de la carga. Para el escenario **pequeño** EC2 no es la opción más eficiente: se pagan 8,32 USD/mes por una máquina ociosa, cuando serverless costaría centavos. Para el escenario **mediano** EC2 con una sola t3.micro es razonable y simple, porque el costo fijo ya se reparte entre 100.000 solicitudes y la administración es mínima. Para el escenario **grande**, EC2 es apropiado si se añade alta disponibilidad (dos instancias y un balanceador), con un costo por solicitud aún menor (≈ 0,000048 USD). Para este taller, que tiene tráfico bajo, una sola instancia EC2 t3.micro es suficiente y demuestra el modelo VM + contenedor; en producción convendría evaluar serverless o contenedores administrados (ECS Fargate) según el patrón real de tráfico.
 
 ## Evidencias
 
@@ -306,6 +312,6 @@ EC2 **funciona técnicamente** en los tres escenarios, pero su conveniencia econ
 | 5 | Entorno multi-contenedor levantado con Docker Compose, respondiendo en el puerto 8087 (`/greeting?name=Compose`) | ![Evidencia 5](image-4.png) |
 | 6 | Repositorio `carlosavellaneda1/virtualization-lab` publicado y visible en Docker Hub | ![Evidencia 6](image-5.png) |
 | 7 | Aplicación desplegada y respondiendo desde una instancia EC2 (`/greeting?name=AWS`) | ![Evidencia 7](image-6.png) |
-| 8 | AWS Pricing Calculator: estimación preliminar de instancias EC2 en US East (Ohio) | ![Evidencia 8](image-7.png) |
-| 9 | AWS Pricing Calculator: resumen de la estimación preliminar | ![Evidencia 9](image-8.png) |
+| 8 | AWS Pricing Calculator: estimación de los tres escenarios en US East (N. Virginia) | ![Evidencia 8](docs/evidence/aws-pricing-calculator.png) |
+| 9 | AWS Pricing Calculator: estimación guardada con enlace público | ![Evidencia 9](docs/evidence/aws-pricing-calculator-share.png) |
 | 10 | Despliegue actual en EC2: `http://54.90.132.138:8080/greeting?name=AWS` | ![Evidencia 10](docs/evidence/ec2-workshop-greeting.png) |
