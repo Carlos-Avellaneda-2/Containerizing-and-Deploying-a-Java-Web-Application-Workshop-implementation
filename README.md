@@ -5,7 +5,7 @@ Implementación del **Repositorio 1: Workshop implementation**. Este proyecto co
 | Recurso | Enlace |
 |---|---|
 | Imagen en Docker Hub | [hub.docker.com/r/carlosavellaneda1/virtualization-lab](https://hub.docker.com/r/carlosavellaneda1/virtualization-lab) |
-| Despliegue público (EC2) | [http://54.90.132.138:8080/greeting?name=AWS](http://54.90.132.138:8080/greeting?name=AWS) |
+| Despliegue público (EC2) | [http://54.91.111.81:8080/greeting?name=AWS](http://54.91.111.81:8080/greeting?name=AWS) |
 | Repositorio 2 (extensión del framework) | [Framework-extension](https://github.com/Carlos-Avellaneda-2/Containerizing-and-Deploying-a-Java-Web-Application-Framework-extension) |
 
 
@@ -169,7 +169,7 @@ docker logs virtualization-lab
 
 Comprueba `http://<ip-publica-ec2>:8080/greeting?name=AWS`; la respuesta esperada es `Hello, AWS!`.
 
-**URL pública del despliegue:** [http://54.90.132.138:8080/greeting?name=AWS](http://54.90.132.138:8080/greeting?name=AWS) *(activa mientras la instancia EC2 permanezca encendida; la IP pública cambia si la instancia se detiene y se vuelve a iniciar. El navegador marca el sitio como "no seguro" porque el tráfico va sin TLS, lo cual es esperado en este taller)*.
+**URL pública del despliegue:** [http://54.91.111.81:8080/greeting?name=AWS](http://54.91.111.81:8080/greeting?name=AWS) *(activa mientras la instancia EC2 permanezca encendida; la IP pública cambia si la instancia se detiene y se vuelve a iniciar. El navegador marca el sitio como "no seguro" porque el tráfico va sin TLS, lo cual es esperado en este taller)*.
 
 Datos de la instancia usada:
 
@@ -179,7 +179,7 @@ Datos de la instancia usada:
 | Tipo de instancia | t3.micro (2 vCPU, 1 GiB RAM) |
 | Sistema operativo | Amazon Linux 2023 |
 | Disco | 8 GiB EBS |
-| DNS público | `ec2-54-90-132-138.compute-1.amazonaws.com` |
+| DNS público | `ec2-54-91-111-81.compute-1.amazonaws.com` |
 | Grupo de seguridad | `launch-wizard-1`: SSH 22 desde la IP del administrador, 8080 para la aplicación |
 
 Salida obtenida en la instancia:
@@ -314,4 +314,5 @@ EC2 **funciona técnicamente** en los tres escenarios, pero su conveniencia econ
 | 7 | Aplicación desplegada y respondiendo desde una instancia EC2 (`/greeting?name=AWS`) | ![Evidencia 7](image-6.png) |
 | 8 | AWS Pricing Calculator: estimación de los tres escenarios en US East (N. Virginia) | ![Evidencia 8](docs/evidence/aws-pricing-calculator.png) |
 | 9 | AWS Pricing Calculator: estimación guardada con enlace público | ![Evidencia 9](docs/evidence/aws-pricing-calculator-share.png) |
-| 10 | Despliegue actual en EC2: `http://54.90.132.138:8080/greeting?name=AWS` | ![Evidencia 10](docs/evidence/ec2-workshop-greeting.png) |
+| 10 | Despliegue actual en EC2: `http://54.91.111.81:8080/greeting?name=AWS` | ![Evidencia 10](docs/evidence/ec2-workshop-greeting.png) |
+
