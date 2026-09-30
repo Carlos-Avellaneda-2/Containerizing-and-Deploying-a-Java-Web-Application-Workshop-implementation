@@ -4,6 +4,7 @@ Implementación del **Repositorio 1: Workshop implementation**. Este proyecto co
 
 | Recurso | Enlace |
 |---|---|
+| Video de demostración (despliegue local con Docker y en EC2) | [youtu.be/rlmp5gFdka4](https://youtu.be/rlmp5gFdka4) |
 | Imagen en Docker Hub | [hub.docker.com/r/carlosavellaneda1/virtualization-lab](https://hub.docker.com/r/carlosavellaneda1/virtualization-lab) |
 | Despliegue público (EC2) | [http://54.91.111.81:8080/greeting?name=AWS](http://54.91.111.81:8080/greeting?name=AWS) |
 | Repositorio 2 (extensión del framework) | [Framework-extension](https://github.com/Carlos-Avellaneda-2/Containerizing-and-Deploying-a-Java-Web-Application-Framework-extension) |
